@@ -10,6 +10,7 @@ Binaries/
 *.hex
 *.bin
 *.elf
+*.dil
 
 #################################################
 # CCS / Build System Generated Files
@@ -22,9 +23,9 @@ sources.mk
 #################################################
 # IDE / Workspace Metadata
 #################################################
-.project
-.cproject
-.settings/
+#.project
+#.cproject
+#.settings/
 
 #################################################
 # Temporary / Log Files

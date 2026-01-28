@@ -48,23 +48,12 @@
 /* Include Files */
 
 #include "sys_common.h"
+#include "system.h"
+#include "gio.h"
+#include "het.h"
+#include "sys_vim.h"
+#include "sys_pmu.h"
 #include "sci.h"
-#include "sys_common.h"
-#include "reg_gio.h"
-
-/* USER CODE BEGIN (1) */
-/* USER CODE END */
-
-/** @fn void main(void)
-*   @brief Application main function
-*   @note This function is empty by default.
-*
-*   This function is called after startup.
-*   The user can use this function to implement the application.
-*/
-
-/* USER CODE BEGIN (2) */
-/* USER CODE END */
 
 void sciDisplayText(sciBASE_t *sci, uint8 *text, uint32 length);
 
@@ -77,44 +66,49 @@ void sciDisplayText(sciBASE_t *sci, uint8 *text, uint32 length)
     }
 }
 
-void delay(void)
+void pmu_start_cycle_counter(void)
 {
-    volatile uint32 i;
-    for(i = 0; i < 1000000; i++) {}  // crude delay
+    _pmuInit_();                      // enable PMU
+    _pmuEnableCountersGlobal_();      // global enable
+    _pmuResetCounters_();             // reset all
+    _pmuStartCounters_(pmuCYCLE_COUNTER); // START CYCLE COUNTER
 }
 
 int main(void)
 {
-/* USER CODE BEGIN (3) */
-/* USER CODE END */
+    uint8 message[] = "Flight Control computer data prompt\r\n";
+
+    /* === Core init === */
+    systemInit();
+    vimInit();
+    vimEnableInterrupt(24,SYS_IRQ);
+
+    /* === Peripheral init === */
+    gioInit();
+    hetInit();
+    pmu_start_cycle_counter();
     sciInit();  // Initializes both sciREG and scilinREG
-    gioInit();  // Initialize the GIO module
+    sciDisplayText(sciREG, message, sizeof(message) - 1);
 
 
-    uint8 message[] = "My First UART program on herculus\r\n";
 
-    // Set GIOB_1 and GIOB_2 as output (bit positions 1 and 2)
-    gioSetDirection(gioPORTB, (1U << 1) | (1U << 2));  // Set bit 1 and 2 as output
+    /* === Configure GPIO directions === */
+    gioSetDirection(gioPORTB, (1U << 1) | (1U << 2));
+
+    /* === Clear GPIOs === */
+    gioSetBit(gioPORTB, 1, 0);
+    gioSetBit(gioPORTB, 2, 0);
+
+    /* === Global interrupt enable === */
+    _enable_IRQ();
 
     while (1)
     {
-        // Set GIOB_1 = 1, GIOB_2 = 0
-        gioSetBit(gioPORTB, 1, 1);
-        gioSetBit(gioPORTB, 2, 0);
-        delay();
+        /* Nothing here — all timing via HET */
+        __asm(" wfi");
 
-        // Set GIOB_1 = 0, GIOB_2 = 1
-        gioSetBit(gioPORTB, 1, 0);
-        gioSetBit(gioPORTB, 2, 1);
-        delay();
-        sciDisplayText(sciREG, message, sizeof(message) - 1);
-//        for (volatile int i = 0; i < 500000; i++); // crude delay
     }
-
-    return 0;
-
 }
-
 
 /* USER CODE BEGIN (4) */
 /* USER CODE END */

@@ -64,6 +64,8 @@
 #include "eqep.h"
 #include "ecap.h"
 #include "sys_dma.h"
+#include "sys_common.h"
+
 
 /* USER CODE BEGIN (0) */
 /* USER CODE END */
@@ -223,14 +225,63 @@ void spiEndNotification(spiBASE_t *spi)
 
 /* USER CODE BEGIN (34) */
 /* USER CODE END */
+static uint32 prev_cycles = 0;
+static uint32 curr_cycles = 0;
+static uint32 delta_cycles = 0;
+static float  delta_ms = 0.0f;
+
+static uint32 prev_cycles0 = 0;
+static uint32 curr_cycles0 = 0;
+static uint32 delta_cycles0 = 0;
+static float  delta_ms0 = 0.0f;
+
 
 #pragma WEAK(pwmNotification)
-void pwmNotification(hetBASE_t * hetREG,uint32 pwm, uint32 notification)
+void pwmNotification(hetBASE_t *het, uint32 pwm, uint32 notification)
 {
-/*  enter user code between the USER CODE BEGIN and USER CODE END. */
-/* USER CODE BEGIN (35) */
-/* USER CODE END */
+    if (het == hetREG1)
+    {
+        if (pwm == 0U)
+        {
+            curr_cycles0 = _pmuGetCycleCount_();
+
+            if (prev_cycles0 != 0)
+            {
+                delta_cycles0 = curr_cycles0 - prev_cycles0;
+
+                /* Convert cycles ms */
+                delta_ms0 = (float)delta_cycles0 / 160000.0f;
+
+                /* Put breakpoint here */
+                /* Expect ~20.0 ms */
+            }
+
+            prev_cycles0 = curr_cycles0;
+            /* PWM0 1 ms minor frame */
+            gioToggleBit(gioPORTB, 1);
+        }
+        else if (pwm == 1U)
+        {
+            curr_cycles = _pmuGetCycleCount_();
+
+            if (prev_cycles != 0)
+            {
+                delta_cycles = curr_cycles - prev_cycles;
+
+                /* Convert cycles ms */
+                delta_ms = (float)delta_cycles / 160000.0f;
+
+                /* Put breakpoint here */
+                /* Expect ~20.0 ms */
+            }
+
+            prev_cycles = curr_cycles;
+            gioToggleBit(gioPORTB, 2);
+
+        }
+    }
 }
+
 
 /* USER CODE BEGIN (36) */
 /* USER CODE END */
@@ -247,9 +298,7 @@ void edgeNotification(hetBASE_t * hetREG,uint32 edge)
 #pragma WEAK(hetNotification)
 void hetNotification(hetBASE_t *het, uint32 offset)
 {
-/*  enter user code between the USER CODE BEGIN and USER CODE END. */
-/* USER CODE BEGIN (39) */
-/* USER CODE END */
+
 }
 
 /* USER CODE BEGIN (40) */
