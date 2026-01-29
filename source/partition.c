@@ -25,8 +25,13 @@ void run_partition(const partition_t *p)
 /* Example partition work (replace with your real code) */
 void partition0_acquire(void)
 {
-    /* sensor reads later; for now toggle LED */
-    gioSetBit(gioPORTB, 1, 0);
+//    register uint32 cpsr_reg;
+//
+//    __asm(" MRS cpsr_reg, CPSR");
+//
+//    uint32 cpsr = cpsr_reg;
+
+//    gioSetBit(gioPORTB, 1, 0);
 
 }
 

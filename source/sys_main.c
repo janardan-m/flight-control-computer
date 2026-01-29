@@ -47,6 +47,7 @@
 
 /* Include Files */
 
+//#include <include/run_user.h>
 #include "sys_common.h"
 #include "system.h"
 #include "gio.h"
@@ -56,10 +57,27 @@
 #include "sci.h"
 #include "partition.h"
 #include "sys_mpu.h"
+//#include "run_user.h"
 
 /* ---- Scheduling flags ---- */
 extern volatile uint8_t g_minor_flag;
 extern volatile uint32_t g_minor_tick;
+
+/*
+ * Stores the kernel return address when entering USER mode.
+ * Written by run_user.asm (privileged mode)
+ * Read by undef_handler.asm (exception return)
+ */
+volatile unsigned int g_run_user_lr = 0;
+
+
+//void undef_return_to_kernel(void)
+//{
+//    /* We trapped back from user partition end.
+//       Just return to scheduler loop (do NOT return to user). */
+//    return;
+//}
+
 
 
 void sciDisplayText(sciBASE_t *sci, uint8 *text, uint32 length);
@@ -124,7 +142,16 @@ int main(void)
         g_minor_flag = 0;
 
         /* Run exactly one partition per 4ms window */
-        run_partition(&g_partitions[cur]);
+//        run_partition(&g_partitions[cur]);
+
+        if (cur == 0)
+        {
+            run_user(g_partitions[cur].entry);   /* P0 in USER mode */
+        }
+        else
+        {
+            run_partition(&g_partitions[cur]);   /* others still privileged */
+        }
 
         cur++;
         if (cur >= PART_COUNT)

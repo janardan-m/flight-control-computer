@@ -45,6 +45,7 @@
     .ref vPortSWI
     .ref _dabort
     .ref phantomInterrupt
+    .ref _undefHandler
     .def resetEntry
 
 ;-------------------------------------------------------------------------------
@@ -53,7 +54,7 @@
 resetEntry
         b   _c_int00
 undefEntry
-        b   undefEntry
+        b   _undefHandler
         b   vPortSWI
 prefetchEntry
         b   prefetchEntry

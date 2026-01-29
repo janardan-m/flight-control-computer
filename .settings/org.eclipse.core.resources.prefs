@@ -4,4 +4,6 @@ encoding//Debug/objects.mk=UTF-8
 encoding//Debug/source/subdir_rules.mk=UTF-8
 encoding//Debug/source/subdir_vars.mk=UTF-8
 encoding//Debug/sources.mk=UTF-8
+encoding//source/run_user.asm=UTF-8
 encoding//source/sys_main.c=UTF-8
+encoding//source/undef_handler.asm=UTF-8
