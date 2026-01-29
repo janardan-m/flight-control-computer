@@ -223,6 +223,7 @@ void spiEndNotification(spiBASE_t *spi)
 /* USER CODE END */
 }
 
+#if 0
 /* USER CODE BEGIN (34) */
 /* USER CODE END */
 static uint32 prev_cycles = 0;
@@ -234,11 +235,17 @@ static uint32 prev_cycles0 = 0;
 static uint32 curr_cycles0 = 0;
 static uint32 delta_cycles0 = 0;
 static float  delta_ms0 = 0.0f;
+#endif
 
+/* ---- Scheduling flags ---- */
+volatile uint8_t g_minor_flag = 0;          /* set by 4ms interrupt */
+volatile uint32_t g_minor_tick = 0;         /* increments every 4ms */
 
 #pragma WEAK(pwmNotification)
 void pwmNotification(hetBASE_t *het, uint32 pwm, uint32 notification)
 {
+
+#if 0
     if (het == hetREG1)
     {
         if (pwm == 0U)
@@ -279,6 +286,17 @@ void pwmNotification(hetBASE_t *het, uint32 pwm, uint32 notification)
             gioToggleBit(gioPORTB, 2);
 
         }
+    }
+#endif
+
+    /* IMPORTANT:
+       Use the same offset that corresponds to your 4ms PWM period interrupt.
+       If offset==0 is the one firing, keep it. */
+
+    if ((het == hetREG1) && (pwm == 0U))
+    {
+        g_minor_tick++;
+        g_minor_flag = 1;
     }
 }
 

@@ -54,6 +54,12 @@
 #include "sys_vim.h"
 #include "sys_pmu.h"
 #include "sci.h"
+#include "partition.h"
+
+/* ---- Scheduling flags ---- */
+extern volatile uint8_t g_minor_flag;
+extern volatile uint32_t g_minor_tick;
+
 
 void sciDisplayText(sciBASE_t *sci, uint8 *text, uint32 length);
 
@@ -102,10 +108,26 @@ int main(void)
     /* === Global interrupt enable === */
     _enable_IRQ();
 
+    uint8_t cur = 0;
+
     while (1)
     {
         /* Nothing here — all timing via HET */
-        __asm(" wfi");
+        if (g_minor_flag == 0)
+        {
+            continue; /* later you can WFI */
+        }
+
+        g_minor_flag = 0;
+
+        /* Run exactly one partition per 4ms window */
+        run_partition(&g_partitions[cur]);
+
+        cur++;
+        if (cur >= PART_COUNT)
+        {
+            cur = 0;
+        }
 
     }
 }
