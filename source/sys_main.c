@@ -55,6 +55,7 @@
 #include "sys_pmu.h"
 #include "sci.h"
 #include "partition.h"
+#include "sys_mpu.h"
 
 /* ---- Scheduling flags ---- */
 extern volatile uint8_t g_minor_flag;
@@ -87,32 +88,34 @@ int main(void)
     /* === Core init === */
     systemInit();
     vimInit();
-    vimEnableInterrupt(24,SYS_IRQ);
 
     /* === Peripheral init === */
     gioInit();
     hetInit();
     pmu_start_cycle_counter();
-    sciInit();  // Initializes both sciREG and scilinREG
+    sciInit();
     sciDisplayText(sciREG, message, sizeof(message) - 1);
 
-
-
-    /* === Configure GPIO directions === */
     gioSetDirection(gioPORTB, (1U << 1) | (1U << 2));
-
-    /* === Clear GPIOs === */
     gioSetBit(gioPORTB, 1, 0);
     gioSetBit(gioPORTB, 2, 0);
 
-    /* === Global interrupt enable === */
+    /* === MPU ON (before IRQs) === */
+    _mpuInit_();
+    _mpuEnable_();
+
+//    volatile uint32_t *p = (volatile uint32_t *)0x0800C000U;
+//    *p = 0xDEADBEEFU;
+
+    /* === Now enable interrupts === */
+    vimEnableInterrupt(24, SYS_IRQ);
     _enable_IRQ();
 
     uint8_t cur = 0;
 
     while (1)
     {
-        /* Nothing here — all timing via HET */
+        /* Nothing here ï¿½ all timing via HET */
         if (g_minor_flag == 0)
         {
             continue; /* later you can WFI */

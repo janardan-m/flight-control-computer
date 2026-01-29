@@ -12,4 +12,5 @@
 	<templateProperties value="id=com.ti.common.project.core.emptyProjectTemplate"/>
 	<filesToOpen value=""/>
 	<isTargetManual value="true"/>
+	<origin value="C:/Users/MedXionic/workspace_v10_test/Flight-Control-Computer"/>
 </projectOptions>

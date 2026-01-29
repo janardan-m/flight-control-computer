@@ -52,13 +52,30 @@
 
 MEMORY
 {
-    VECTORS (X)  : origin=0x00000000 length=0x00000020
-    KERNEL  (RX) : origin=0x00000020 length=0x00008000 
-    FLASH0  (RX) : origin=0x00008020 length=0x00137FE0
-    STACKS  (RW) : origin=0x08000000 length=0x00000800
-    KRAM    (RW) : origin=0x08000800 length=0x00000800
-    RAM     (RW) : origin=(0x08000800+0x00000800) length=(0x0002F800 - 0x00000800)
-    
+/* Flash */
+VECTORS      (X)  : origin=0x00000000 length=0x00000020
+KERNEL_FLASH (RX) : origin=0x00000020 length=0x00008000
+FLASH0       (RX) : origin=0x00008020 length=0x00137FE0
+
+/* RAM (no overlaps; MPU-friendly boundaries for later) */
+STACKS       (RW) : origin=0x08000000 length=0x00000800 /* 2 KB */
+KRAM         (RW) : origin=0x08000800 length=0x00000800 /* 2 KB */
+
+/* System RAM holds kernel heap + global .bss/.data (28 KB) */
+SYSTEM_RAM   (RW) : origin=0x08001000 length=0x00007000 /* 0x08001000..0x08007FFF */
+
+/* Shared memory for IPC / monitoring (16 KB) */
+SHARED_RAM   (RW) : origin=0x08008000 length=0x00004000 /* 0x08008000..0x0800BFFF */
+
+/* 4 partition private RAM blocks (16 KB each) */
+P0_RAM       (RW) : origin=0x0800C000 length=0x00004000 /* 0x0800C000..0x0800FFFF */
+P1_RAM       (RW) : origin=0x08010000 length=0x00004000 /* 0x08010000..0x08013FFF */
+P2_RAM       (RW) : origin=0x08014000 length=0x00004000 /* 0x08014000..0x08017FFF */
+P3_RAM       (RW) : origin=0x08018000 length=0x00004000 /* 0x08018000..0x0801BFFF */
+
+/* Free / expansion RAM (80 KB) */
+FREE_RAM     (RW) : origin=0x0801C000 length=0x00014000 /* 0x0801C000..0x0802FFFF */
+
 /* USER CODE BEGIN (2) */
 /* USER CODE END */
 }
@@ -71,19 +88,39 @@ MEMORY
 
 SECTIONS
 {
-    .intvecs : {} > VECTORS
-    /* FreeRTOS Kernel in protected region of Flash */
-    .kernelTEXT   : {} > KERNEL
-    .cinit        : {} > KERNEL
-    .pinit        : {} > KERNEL
-    /* Rest of code to user mode flash region */
-    .text         : {} > FLASH0 
-    .const        : {} > FLASH0 
-    /* FreeRTOS Kernel data in protected region of RAM */
-    .kernelBSS    : {} > KRAM
-    .kernelHEAP   : {} > RAM
-    .bss          : {} > RAM
-    .data         : {} > RAM    
+.intvecs : {} > VECTORS
+
+/* FreeRTOS Kernel in protected region of Flash */
+.kernelTEXT   : {} > KERNEL_FLASH
+.cinit        : {} > KERNEL_FLASH
+.pinit        : {} > KERNEL_FLASH
+
+/* Rest of code to user mode flash region */
+.text         : {} > FLASH0
+.const        : {} > FLASH0
+
+/* Stack placement (explicit) */
+.stack        : {} > STACKS
+
+/* FreeRTOS Kernel data in protected region of RAM */
+.kernelBSS    : {} > KRAM
+
+/* System RAM (kernel heap + global data) */
+.kernelHEAP   : {} > SYSTEM_RAM
+.bss          : {} > SYSTEM_RAM
+.data         : {} > SYSTEM_RAM
+
+/* Shared RAM (define vars with __attribute__((section(".shared")))) */
+.sharedRAM    : {} > SHARED_RAM
+
+/* Partition private RAM (same-file partitions supported via section tags) */
+.p0RAM        : {} > P0_RAM
+.p1RAM        : {} > P1_RAM
+.p2RAM        : {} > P2_RAM
+.p3RAM        : {} > P3_RAM
+
+/* Optional: general-purpose/free RAM for future */
+.freeRAM      : {} > FREE_RAM
 
 /* USER CODE BEGIN (4) */
 /* USER CODE END */
