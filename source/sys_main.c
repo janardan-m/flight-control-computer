@@ -47,7 +47,6 @@
 
 /* Include Files */
 
-//#include <include/run_user.h>
 #include "sys_common.h"
 #include "system.h"
 #include "gio.h"
@@ -57,7 +56,7 @@
 #include "sci.h"
 #include "partition.h"
 #include "sys_mpu.h"
-//#include "run_user.h"
+#include "run_user.h"
 
 /* ---- Scheduling flags ---- */
 extern volatile uint8_t g_minor_flag;
@@ -70,15 +69,7 @@ extern volatile uint32_t g_minor_tick;
  */
 volatile unsigned int g_run_user_lr = 0;
 
-
-//void undef_return_to_kernel(void)
-//{
-//    /* We trapped back from user partition end.
-//       Just return to scheduler loop (do NOT return to user). */
-//    return;
-//}
-
-
+volatile uint32_t g_user_sp_top = 0;
 
 void sciDisplayText(sciBASE_t *sci, uint8 *text, uint32 length);
 
@@ -132,7 +123,7 @@ int main(void)
 
     while (1)
     {
-        /* Nothing here � all timing via HET */
+        /* Nothing here ? all timing via HET */
         if (g_minor_flag == 0)
         {
             continue; /* later you can WFI */
@@ -140,7 +131,11 @@ int main(void)
 
         g_minor_flag = 0;
 
-        run_user(g_partitions[cur].entry);   /* P0 in USER mode */
+        mpu_set_active_partition(cur);
+
+        /* Enter USER mode and run partition */
+        run_user(g_partitions[cur].entry, 0);
+
 
         cur++;
         if (cur >= PART_COUNT)
