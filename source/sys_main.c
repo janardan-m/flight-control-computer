@@ -122,8 +122,7 @@ int main(void)
     _mpuInit_();
     _mpuEnable_();
 
-//    volatile uint32_t *p = (volatile uint32_t *)0x0800C000U;
-//    *p = 0xDEADBEEFU;
+
 
     /* === Now enable interrupts === */
     vimEnableInterrupt(24, SYS_IRQ);
@@ -141,17 +140,7 @@ int main(void)
 
         g_minor_flag = 0;
 
-        /* Run exactly one partition per 4ms window */
-//        run_partition(&g_partitions[cur]);
-
-        if (cur == 0)
-        {
-            run_user(g_partitions[cur].entry);   /* P0 in USER mode */
-        }
-        else
-        {
-            run_partition(&g_partitions[cur]);   /* others still privileged */
-        }
+        run_user(g_partitions[cur].entry);   /* P0 in USER mode */
 
         cur++;
         if (cur >= PART_COUNT)

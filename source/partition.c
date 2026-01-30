@@ -1,5 +1,12 @@
 #include "partition.h"
 #include "sys_pmu.h"   /* HALCoGen PMU APIs: _pmuGetCycleCount_(), etc */
+#include <stdint.h>
+#include "svc_call.h"
+
+#define OP_GPIOA_TOGGLE 1u
+#define OP_GPIOB_TOGGLE 2u
+
+
 
 static volatile uint32_t g_last_overrun_pid = 0xFFFFFFFFu;
 static volatile uint32_t g_last_overrun_cycles = 0;
@@ -25,27 +32,20 @@ void run_partition(const partition_t *p)
 /* Example partition work (replace with your real code) */
 void partition0_acquire(void)
 {
-//    register uint32 cpsr_reg;
-//
-//    __asm(" MRS cpsr_reg, CPSR");
-//
-//    uint32 cpsr = cpsr_reg;
-
-//    gioSetBit(gioPORTB, 1, 0);
-
+    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
 
 void partition1_estimate(void)
 {
-    gioSetBit(gioPORTB, 1, 1);
+    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
 
 void partition2_control(void)
 {
-    gioSetBit(gioPORTB, 2, 0);
+    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
 
 void partition3_actuate(void)
 {
-    gioSetBit(gioPORTB, 2, 1);
+    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
