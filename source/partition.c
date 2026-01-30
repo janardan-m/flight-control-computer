@@ -45,21 +45,40 @@ static volatile uint32_t g_last_overrun_cycles = 0;
 /* Example partition work (replace with your real code) */
 void partition0_acquire(void)
 {
+    *(int *)0x0800C000 = 1;   // own RAM  OK
+    *(int *)0x08008000 = 3;   // shared RAM OK
+//    *(int *)0x08000000 = 4;   // kernel RAM MUST ABORT
+//    *(int *)0x08010000 = 2;   // P1 RAM MUST ABORT
+//    gioToggleBit(gioPORTB, 1); // Peripheral access Aport
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
 
 void partition1_estimate(void)
 {
+    *(int *)0x08010000 = 2;   // P1 RAM ok
+    *(int *)0x08008100 = 3;   // shared RAM OK
+//    *(int *)0x08000000 = 4;   // kernel RAM MUST ABORT
+//    *(int *)0x0800C000 = 1;   // P0 Abort
+
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
 
 void partition2_control(void)
 {
+    *(int *)0x08014000 = 3;   //P2 RAM 0k
+    *(int *)0x08008110 = 3;   // shared RAM OK
+//    *(int *)0x08000000 = 4;   // kernel RAM MUST ABORT
+//    *(int *)0x08010000 = 2;   // P1 RAM abort
+
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
 
 void partition3_actuate(void)
 {
+    *(int *)0x08018000 = 3;   //P3 RAM 0k
+    *(int *)0x08008120 = 3;   // shared RAM OK
+//    *(int *)0x08000000 = 4;   // kernel RAM MUST ABORT
+//    *(int *)0x0800c004 = 2;   // P0 RAM abort
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
 
@@ -72,14 +91,6 @@ void mpu_set_active_partition(uint32 pid)
 
     /* 2) Reprogram MPU safely (do it in privileged mode only) */
     _mpuDisable_();
-
-    /* ---- Region 3: Shared RAM (keep fixed, but re-assert if you want) ---- */
-    _mpuSetRegion_(MPU_REGION_SHARED);
-    _mpuSetRegionBaseAddress_(SHARED_RAM_BASE);
-    _mpuSetRegionTypeAndPermission_(MPU_NORMAL_OINC_NONSHARED,
-                                    MPU_PRIV_RW_USER_RW_NOEXEC);
-    _mpuSetRegionSizeRegister_(mpuREGION_ENABLE | SHARED_RAM_SIZE);
-    /* no subregions disabled -> don’t OR any mpuSUBREGIONx_DISABLE */
 
     /* ---- Region 4: Active Partition RAM (this is what changes per switch) ---- */
     _mpuSetRegion_(MPU_REGION_ACTIVE);

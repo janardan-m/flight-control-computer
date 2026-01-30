@@ -34,9 +34,25 @@ are documented here:
 👉 https://www.bitsonboard.co.in
 
 ## Project Status
-- Architecture defined
-- Platform abstraction in progress
-- Control-loop timing analysis planned
+## Current Status (MPU + USER Mode Baseline)
+
+This project currently implements a working **partitioned kernel** on the
+TMS570 (Cortex-R4) using **MPU enforcement, USER/PRIVILEGED mode separation,
+and SVC-based system calls**.
+
+### Execution Model
+- Kernel runs in **Privileged (SVC) mode**
+- Application partitions run in **USER mode**
+- CPU mode transitions are verified via CPSR
+  - USER mode: `0x10`
+  - SVC/Kernel: `0x13`
+- Refer kernel_svc.c file for kernel_svc_dispatch call, add peripherals related code in this function
+
+### Time Partitioning
+- 4 application partitions
+- Each partition executes for ~5 ms
+- Partitions are scheduled cyclically:
+
 
 ## Non-Goals
 - Autopilot feature completeness
