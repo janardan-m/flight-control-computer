@@ -47,8 +47,8 @@ void partition0_acquire(void)
 {
     *(int *)0x0800C000 = 1;   // own RAM  OK
     *(int *)0x08008000 = 3;   // shared RAM OK
-//    *(int *)0x08000000 = 4;   // kernel RAM MUST ABORT
-    *(int *)0x08010000 = 2;   // P1 RAM MUST ABORT
+//    *(int *)0x08000000 = 4;   // kernel RAM MUST DABORT
+//    *(int *)0x08010000 = 2;   // P1 RAM MUST DABORT
 //    gioToggleBit(gioPORTB, 1); // Peripheral access Aport
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
@@ -60,7 +60,6 @@ void partition1_estimate(void)
     *(int *)0x08008100 = 3;   // shared RAM OK
 //    *(int *)0x08000000 = 4;   // kernel RAM MUST DABORT
 //    *(int *)0x0800C000 = 1;   // P0 Abort
-
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
 
@@ -70,6 +69,7 @@ void partition2_control(void)
     *(int *)0x08008110 = 3;   // shared RAM OK
 //    *(int *)0x08000000 = 4;   // kernel RAM MUST DABORT
 //    *(int *)0x08010000 = 2;   // P1 RAM abort
+//    ((void (*)(void))0x08008000)();   // RAM marked NOEXEC Pabort
 
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }

@@ -47,6 +47,7 @@
     .ref phantomInterrupt
     .ref _undefHandler
     .ref svcEntry
+    .ref _pabort
     .def resetEntry
 
 ;-------------------------------------------------------------------------------
@@ -57,8 +58,7 @@ resetEntry
 undefEntry
         b   _undefHandler
         b   svcEntry
-prefetchEntry
-        b   prefetchEntry
+        b   _pabort
         b   _dabort
         b   phantomInterrupt
         ldr pc,[pc,#-0x1b0]
