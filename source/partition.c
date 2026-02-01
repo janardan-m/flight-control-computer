@@ -58,7 +58,7 @@ void partition1_estimate(void)
 
     *(int *)0x08010000 = 2;   // P1 RAM ok
     *(int *)0x08008100 = 3;   // shared RAM OK
-//    *(int *)0x08000000 = 4;   // kernel RAM MUST ABORT
+//    *(int *)0x08000000 = 4;   // kernel RAM MUST DABORT
 //    *(int *)0x0800C000 = 1;   // P0 Abort
 
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
@@ -68,7 +68,7 @@ void partition2_control(void)
 {
     *(int *)0x08014000 = 3;   //P2 RAM 0k
     *(int *)0x08008110 = 3;   // shared RAM OK
-//    *(int *)0x08000000 = 4;   // kernel RAM MUST ABORT
+//    *(int *)0x08000000 = 4;   // kernel RAM MUST DABORT
 //    *(int *)0x08010000 = 2;   // P1 RAM abort
 
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
@@ -78,7 +78,7 @@ void partition3_actuate(void)
 {
     *(int *)0x08018000 = 3;   //P3 RAM 0k
     *(int *)0x08008120 = 3;   // shared RAM OK
-//    *(int *)0x08000000 = 4;   // kernel RAM MUST ABORT
+//    *(int *)0x08000000 = 4;   // kernel RAM MUST DABORT
 //    *(int *)0x0800c004 = 2;   // P0 RAM abort
     svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }

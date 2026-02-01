@@ -77,8 +77,8 @@ _dabort
 
         ; Enable IRQs
         mrs     r0,CPSR
-   		bic     r0, r0, #0x80
-   		msr     CPSR_c, r0
+		bic     r0, r0, #0x80
+		msr     CPSR_c, r0
 
         ; Jump back to kernel return point saved by run_user()
         ldr     r2, g_run_user_lr_addr
