@@ -57,6 +57,7 @@
 #include "partition.h"
 #include "sys_mpu.h"
 #include "run_user.h"
+#include "health.h"
 
 /* ---- Scheduling flags ---- */
 extern volatile uint8_t g_minor_flag;
@@ -70,6 +71,8 @@ extern volatile uint32_t g_minor_tick;
 volatile unsigned int g_run_user_lr = 0;
 
 volatile uint32_t g_user_sp_top = 0;
+
+volatile uint32 g_kernel_sp = 0;
 
 void sciDisplayText(sciBASE_t *sci, uint8 *text, uint32 length);
 
@@ -130,6 +133,16 @@ int main(void)
         }
 
         g_minor_flag = 0;
+
+        // round robin
+        if (health_is_faulted(cur)) {
+            cur++;
+            if (cur >= PART_COUNT) cur = 0;
+            continue;
+        }
+
+        // set which partition is active (for fault handlers)
+        g_active_pid = cur;
 
         mpu_set_active_partition(cur);
 

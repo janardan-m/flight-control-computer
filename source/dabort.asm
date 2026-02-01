@@ -42,19 +42,67 @@
 ;-------------------------------------------------------------------------------
 ; Run Memory Test
 
+	.ref g_run_user_lr
+    .ref fault_report_dabort   ; optional C logger (you can stub)
+
     .ref	custom_dabort
     .def	_dabort
     .asmfunc
 
 _dabort
-		stmfd	r13!, {r0 - r12, lr}; push registers and link register on to stack
+        stmfd   r13!, {r0 - r12, lr}        ; save regs on ABORT stack
 
-        ldr		r12, esmsr3			; ESM Group3 status register
-        ldr		r0,  [r12]
-        tst		r0,  #0x8			; check if bit 3 is set, this indicates uncorrectable ECC error on B0TCM
-        bne		ramErrorFound
-        tst		r0, #0x20			; check if bit 5 is set, this indicates uncorrectable ECC error on B1TCM
-        bne		ramErrorFound2
+        ; ---- Check origin mode (SPSR_abt[4:0]) ----
+        mrs     r1, SPSR                    ; r1 = SPSR_abt (CPSR of code that faulted)
+        and     r1, r1, #0x1F               ; r1 = mode bits
+        cmp     r1, #0x10                   ; 0x10 = USER mode
+        bne     dabort_privileged           ; if not USER, keep TI behavior
+
+        ; =========================================================
+        ; USER-MODE DATA ABORT  => kill/suspend this partition
+        ; and return to kernel scheduler (privileged).
+        ; =========================================================
+
+        ; OPTIONAL: log (safe minimal logger)
+        ; r0 = lr_abt (return address near fault), r1 = SPSR_abt
+        mov     r0, lr
+        mrs     r1, SPSR
+        bl      fault_report_dabort    ; if you don't want logging, delete these 3 lines
+
+        ; Restore registers (so kernel doesn't see garbage in regs)
+        ldmfd   r13!, {r0 - r12, lr}
+
+        ; Switch to SVC mode (privileged). This changes SP to SP_svc (kernel stack).
+        cps     #0x13
+
+        ; Enable IRQs
+        mrs     r0,CPSR
+   		bic     r0, r0, #0x80
+   		msr     CPSR_c, r0
+
+        ; Jump back to kernel return point saved by run_user()
+        ldr     r2, g_run_user_lr_addr
+        ldr     lr, [r2]
+        bx      lr                          ; continue kernel scheduler after run_user()
+
+        ; ---- literal pool ----
+g_run_user_lr_addr:
+        .word   g_run_user_lr
+
+
+dabort_privileged:
+        ; =========================================================
+        ; PRIVILEGED/KERNEL DATA ABORT => keep original TI logic
+        ; =========================================================
+
+        ; (fall-through into your existing TI code below)
+        ldr     r12, esmsr3
+        ldr     r0,  [r12]
+        tst     r0,  #0x8
+        bne     ramErrorFound
+        tst     r0,  #0x20
+        bne     ramErrorFound2
+
 
 noRAMerror
 		tst		r0, #0x80			; check if bit 7 is set, this indicates uncorrectable ECC error on ATCM

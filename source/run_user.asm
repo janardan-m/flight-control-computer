@@ -3,8 +3,13 @@
     .global g_run_user_lr
     .global g_user_sp_top
 
+    .ref g_kernel_sp
+
 run_user:
     ; r0 = entry function pointer
+
+    ldr  r2, g_kernel_sp_addr
+    str  sp, [r2]
 
     ; Save kernel return address
     ldr     r1, g_run_user_lr_addr
@@ -31,3 +36,6 @@ g_run_user_lr_addr:
 
 g_user_sp_top_addr:
     .word   g_user_sp_top
+
+g_kernel_sp_addr:
+    .word g_kernel_sp
