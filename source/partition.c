@@ -4,6 +4,7 @@
 #include "svc_call.h"
 #include "sys_common.h"
 #include "sys_mpu.h"
+#include "ipc.h"
 
 /* Fixed shared RAM region from your screenshot (Region 3) */
 #define SHARED_RAM_BASE   (0x08008000U)
@@ -16,10 +17,11 @@
 extern
 volatile uint32_t g_user_sp_top;
 
-
-
-#define OP_GPIOA_TOGGLE 1u
-#define OP_GPIOB_TOGGLE 2u
+#define OP_GPIOA_TOGGLE   1u
+#define OP_GPIOB_TOGGLE   2u
+#define OP_IMU_READ       3u   /* placeholder */
+#define OP_IPC_PUBLISH    4u
+#define OP_IPC_READ       5u
 
 #define P_RAM_SIZE   (0x4000u)  /* 16KB */
 
@@ -42,6 +44,21 @@ static const partition_mem_t g_part_mem[4] =
 static volatile uint32_t g_last_overrun_pid = 0xFFFFFFFFu;
 static volatile uint32_t g_last_overrun_cycles = 0;
 
+/* kernel_sched.c */
+static uint8_t g_current_pid;
+
+void kernel_switch_to_partition(uint8_t pid)
+{
+    g_current_pid = pid;
+    /* context switch */
+}
+
+uint8_t kernel_current_pid(void)
+{
+    return g_current_pid;
+}
+
+
 /* Example partition work (replace with your real code) */
 void partition0_acquire(void)
 {
@@ -50,7 +67,17 @@ void partition0_acquire(void)
 //    *(int *)0x08000000 = 4;   // kernel RAM MUST DABORT
 //    *(int *)0x08010000 = 2;   // P1 RAM MUST DABORT
 //    gioToggleBit(gioPORTB, 1); // Peripheral access Aport
-    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
+//    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
+    imu_data_t imu;
+    imu.ax = 1.1;
+    imu.ay = 1.2;
+    imu.az = 1.3;
+    imu.gx = 1.4;
+    imu.gy = 1.5;
+    imu.gz = 1.6;
+//    read_imu_hw(&imu);
+    svc_call(OP_IPC_PUBLISH, IPC_KEY_IMU, sizeof(imu),&imu);
+
 }
 
 void partition1_estimate(void)
@@ -60,7 +87,8 @@ void partition1_estimate(void)
     *(int *)0x08008100 = 3;   // shared RAM OK
 //    *(int *)0x08000000 = 4;   // kernel RAM MUST DABORT
 //    *(int *)0x0800C000 = 1;   // P0 Abort
-    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
+//    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
+//    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
 }
 
 void partition2_control(void)
@@ -71,7 +99,14 @@ void partition2_control(void)
 //    *(int *)0x08010000 = 2;   // P1 RAM abort
 //    ((void (*)(void))0x08008000)();   // RAM marked NOEXEC Pabort
 
-    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
+//    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
+    imu_data_t imu_read;
+    airdata_t air;
+    control_cmd_t cmd;
+
+//    compute_control(&imu, &air, &cmd);
+    svc_call(OP_IPC_READ, IPC_KEY_IMU,&imu_read,0);
+
 }
 
 void partition3_actuate(void)
@@ -80,7 +115,15 @@ void partition3_actuate(void)
     *(int *)0x08008120 = 3;   // shared RAM OK
 //    *(int *)0x08000000 = 4;   // kernel RAM MUST DABORT
 //    *(int *)0x0800c004 = 2;   // P0 RAM abort
-    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
+//    svc_call(OP_GPIOB_TOGGLE, 1 /*pin*/, 0, 0);
+//    control_cmd_t cmd;
+//    servo_out_t servo;
+
+//    ipc_read_kernel(IPC_KEY_CONTROL_CMD, &cmd);
+//    mix_to_servo(&cmd, &servo);
+//
+//    ipc_publish(IPC_KEY_SERVO_OUT, &servo, sizeof(servo));
+
 }
 
 void mpu_set_active_partition(uint32 pid)

@@ -145,7 +145,6 @@ int main(void)
         g_active_pid = cur;
 
         mpu_set_active_partition(cur);
-
         /* Enter USER mode and run partition */
         run_user(g_partitions[cur].entry, 0);
 
